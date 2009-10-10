@@ -24,7 +24,6 @@
 ;; requires:
 ;; w3m
 
-
 ;; Installation:
 ;; (require 'xcode-document-viewer)
 ;; (setq xcdoc:document-path "/Developer/Platforms/iPhoneOS.platform/Developer/Documentation/DocSets/com.apple.adc.documentation.AppleiPhone3_1.iPhoneLibrary.docset")
@@ -119,7 +118,7 @@
 (defun xcdoc:open-w3m (url &optional new-session)
   (w3m-browse-url (xcdoc:extract-html url) new-session))
 
-(defvar xcdoc:search-source
+(defun xcdoc:search-source ()
   `((name . ,(xcdoc:document-path))
     (candidates . (lambda ()
                     (xcdoc:excecute-search-async
@@ -135,7 +134,7 @@
              (or (thing-at-point 'symbol) ""))
     :docset (xcdoc:document-path))))
 
-(defvar xcdoc:search-at-point-source
+(defun xcdoc:search-at-point-source ()
   `((name . ,(xcdoc:document-path))
     (candidates . xcdoc:search-at-point-source-candidates)
     (action . (("w3m" . xcdoc:open-w3m)
@@ -143,12 +142,12 @@
 
 (defun xcdoc:search ()
   (interactive)
-  (anything 'xcdoc:search-source))
+  (anything (list (xcdoc:search-source))))
 
 (defun xcdoc:search-at-point ()
   (interactive)
   (let ((anything-quit-if-no-candidate (lambda () (message "no document for %s" (or (thing-at-point 'symbol) "")))))
-    (anything 'xcdoc:search-at-point-source)))
+    (anything (list (xcdoc:search-at-point-source)))))
 
 (provide 'xcode-document-viewer)
 ;; xcode-document-viewer.el ends here.

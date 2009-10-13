@@ -160,8 +160,9 @@
 
 (defun xcdoc:ask-search ()
   (interactive)
-  (let ((query (read-string "Query: " (or (thing-at-point 'symbol) ""))))
-    (anything (list (xcdoc:search-at-point-source query)))))
+  (lexical-let* ((query (read-string "Query: " (or (thing-at-point 'symbol) ""))))
+    (let ((anything-quit-if-no-candidate (lambda () (message "no document for %s" query))))
+    (anything (list (xcdoc:search-at-point-source query))))))
 
 (defun xcdoc:search-at-point ()
   (interactive)

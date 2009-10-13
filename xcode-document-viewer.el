@@ -27,6 +27,7 @@
 ;; Installation:
 ;; (require 'xcode-document-viewer)
 ;; (setq xcdoc:document-path "/Developer/Platforms/iPhoneOS.platform/Developer/Documentation/DocSets/com.apple.adc.documentation.AppleiPhone3_1.iPhoneLibrary.docset")
+;; (setq xcdoc:open-w3m-other-buffer t) ;if you like
 
 ;; to change docset-path
 ;; M-x xcdoc:set-document-path
@@ -37,6 +38,9 @@
 ;; to search document symbol at point
 ;; M-x xcdoc:search-at-point
 
+;; to select query then search
+;; M-x xcdoc:ask-search
+
 
 (require 'w3m-load)
 (require 'thingatpt)
@@ -45,6 +49,9 @@
 (defcustom xcdoc:document-path nil
   "please set docset full path like:
 \"/Developer/Platforms/iPhoneOS.platform/Developer/Documentation/DocSets/com.apple.adc.documentation.AppleiPhone3_1.iPhoneLibrary.docset\"")
+
+(defcustom xcdoc:open-w3m-other-buffer nil
+  "")
 
 (defun xcdoc:set-document-path (&optional docset-path)
   (interactive "fdocset: ")
@@ -116,7 +123,13 @@
 
 ;;(w3m-browse-url (xcdoc:extract-html" Objective-C/cl/-/UIView   documentation/UIKit/Reference/UIView_Class/UIView/UIView.html#//apple_ref/occ/cl/UIView"))
 (defun xcdoc:open-w3m (url &optional new-session)
-  (w3m-browse-url (xcdoc:extract-html url) new-session))
+  (cond
+   (xcdoc:open-w3m-other-buffer
+    (let ((b (save-window-excursion (w3m-browse-url (xcdoc:extract-html url) new-session) (get-buffer "*w3m*"))))
+      (ignore-errors (save-selected-window (pop-to-buffer "*w3m*")))))
+   (t
+    (wq3m-browse-url (xcdoc:extract-html url) new-session))))
+
 
 (defun xcdoc:search-source ()
   `((name . ,(xcdoc:document-path))
@@ -127,22 +140,28 @@
     (action . (("w3m" . xcdoc:open-w3m)
                ("w3m new-session" . (lambda (c) (xcdoc:open-w3m c t)))))))
 
-(defun xcdoc:search-at-point-source-candidates ()
+(defun* xcdoc:search-at-point-source-candidates
+    (&optional (query (with-current-buffer anything-current-buffer
+                        (or (thing-at-point 'symbol) ""))))
   (xcdoc:build-candidates-from-command-res
    (xcdoc:excecute-search
-    :query (with-current-buffer anything-current-buffer
-             (or (thing-at-point 'symbol) ""))
+    :query query
     :docset (xcdoc:document-path))))
 
-(defun xcdoc:search-at-point-source ()
+(defun xcdoc:search-at-point-source (&optional query)
   `((name . ,(xcdoc:document-path))
-    (candidates . xcdoc:search-at-point-source-candidates)
+    (candidates . (lambda () (xcdoc:search-at-point-source-candidates ,query)))
     (action . (("w3m" . xcdoc:open-w3m)
                ("w3m new-session" . (lambda (c) (xcdoc:open-w3m c t)))))))
 
 (defun xcdoc:search ()
   (interactive)
   (anything (list (xcdoc:search-source))))
+
+(defun xcdoc:ask-search ()
+  (interactive)
+  (let ((query (read-string "Query: " (or (thing-at-point 'symbol) ""))))
+    (anything (list (xcdoc:search-at-point-source query)))))
 
 (defun xcdoc:search-at-point ()
   (interactive)

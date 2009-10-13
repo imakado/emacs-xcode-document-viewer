@@ -134,9 +134,13 @@
 (defun xcdoc:search-source ()
   `((name . ,(xcdoc:document-path))
     (candidates . (lambda ()
-                    (xcdoc:excecute-search-async
-                     :query anything-pattern
-                     :docset (xcdoc:document-path))))
+                    (xcdoc:build-candidates-from-command-res
+                     (xcdoc:excecute-search
+                      :query anything-pattern
+                      :docset (xcdoc:document-path)))))
+    (volatile)
+    (delayed)
+    (requires-pattern . 2)
     (action . (("w3m" . xcdoc:open-w3m)
                ("w3m new-session" . (lambda (c) (xcdoc:open-w3m c t)))))))
 
